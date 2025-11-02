@@ -185,10 +185,10 @@ export function HeatmapCalendar({
                     </span>
                     {today && (
                       <div
-                        className="absolute inset-0 rounded ring-2 ring-offset-1"
-                        style={{
-                          "--tw-ring-color": color,
-                        }}
+                        className={`absolute inset-0 rounded ring-2 ring-offset-1`}
+                        style={
+                          { "--tw-ring-color": color } as React.CSSProperties
+                        }
                       />
                     )}
                   </button>
