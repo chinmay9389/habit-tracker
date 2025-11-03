@@ -36,11 +36,12 @@ interface AddWorkoutDialogProps {
   refreshTrigger?: number;
 }
 
-const EXERCISE_CATEGORIES = [
+export const EXERCISE_CATEGORIES = [
   "Chest",
-  "Back",
   "Shoulders",
-  "Arms",
+  "Triceps",
+  "Back",
+  "Biceps",
   "Legs",
   "Core",
   "Cardio",

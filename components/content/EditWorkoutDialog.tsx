@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 import type { Workout, Exercise, ExerciseSet } from "./WorkoutTracker";
 import type { CustomExercise } from "./ManageTemplatesDialog";
+import { EXERCISE_CATEGORIES } from "./AddWorkoutDialog";
 
 interface EditWorkoutDialogProps {
   open: boolean;
@@ -36,17 +37,6 @@ interface EditWorkoutDialogProps {
   ) => void;
   userId: string;
 }
-
-const EXERCISE_CATEGORIES = [
-  "Chest",
-  "Back",
-  "Shoulders",
-  "Arms",
-  "Legs",
-  "Core",
-  "Cardio",
-  "Other",
-];
 
 const EXERCISE_TEMPLATES = [
   // Chest
