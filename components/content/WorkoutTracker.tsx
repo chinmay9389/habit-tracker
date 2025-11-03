@@ -18,7 +18,7 @@ import { WorkoutStats } from "./WorkoutStats";
 import { WorkoutCharts } from "./WorkoutCharts";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
-
+import { EditWorkoutDialog } from "./EditWorkoutDialog";
 export interface ExerciseSet {
   reps: number;
   weight: number | null;
@@ -55,6 +55,8 @@ export function WorkoutTracker({ userId }: WorkoutTrackerProps) {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [isManageTemplatesOpen, setIsManageTemplatesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
@@ -169,6 +171,50 @@ export function WorkoutTracker({ userId }: WorkoutTrackerProps) {
     }
   };
 
+  const editWorkout = async (
+    workoutId: string,
+    workoutUpdates: Partial<Workout>,
+    exerciseList: Omit<Exercise, "id" | "workout_id" | "created_at">[]
+  ) => {
+    try {
+      // Update workout
+      const { error: workoutError } = await supabase
+        .from("workouts")
+        .update(workoutUpdates)
+        .eq("id", workoutId);
+
+      if (workoutError) throw workoutError;
+
+      // Delete existing exercises
+      await supabase.from("exercises").delete().eq("workout_id", workoutId);
+
+      // Insert new exercises
+      if (exerciseList.length > 0) {
+        const exerciseRows = exerciseList.map((ex) => ({
+          workout_id: workoutId,
+          user_id: ex.user_id,
+          name: ex.name,
+          category: ex.category,
+          sets: ex.sets,
+          unit: ex.unit,
+        }));
+
+        const { error: exercisesError } = await supabase
+          .from("exercises")
+          .insert(exerciseRows);
+
+        if (exercisesError) throw exercisesError;
+      }
+
+      toast.success("Workout updated! 💪");
+      loadWorkouts();
+      loadExercises();
+    } catch (error: any) {
+      console.error("Error updating workout:", error);
+      toast.error("Failed to update workout");
+    }
+  };
+
   const deleteWorkout = async (workoutId: string) => {
     try {
       // Delete exercises first (foreign key constraint)
@@ -189,6 +235,11 @@ export function WorkoutTracker({ userId }: WorkoutTrackerProps) {
       console.error("Error deleting workout:", error);
       toast.error("Failed to delete workout");
     }
+  };
+
+  const handleEditWorkout = (workout: Workout) => {
+    setEditingWorkout(workout);
+    setIsEditDialogOpen(true);
   };
 
   // Group exercises by workout
@@ -277,6 +328,7 @@ export function WorkoutTracker({ userId }: WorkoutTrackerProps) {
             <WorkoutHistory
               workouts={workoutsWithExercises}
               onDelete={deleteWorkout}
+              onEdit={handleEditWorkout}
             />
           )}
         </TabsContent>
@@ -300,6 +352,15 @@ export function WorkoutTracker({ userId }: WorkoutTrackerProps) {
         onAdd={addWorkout}
         userId={userId}
         refreshTrigger={refreshTrigger}
+      />
+
+      {/* Edit Workout Dialog */}
+      <EditWorkoutDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        workout={editingWorkout}
+        onSave={editWorkout}
+        userId={userId}
       />
 
       {/* Manage Templates Dialog */}

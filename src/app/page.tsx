@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Dumbbell,
   LogOut,
+  User,
 } from "lucide-react";
 import { Toaster } from "../../components/ui/sonner";
 import { Button } from "../../components/ui/button";
@@ -28,6 +29,7 @@ import { CategoryFilter } from "../../components/content/CategoryFilter";
 import { HabitCard } from "../../components/content/HabitCard";
 import { AuthForm } from "../../components/content/AuthForm";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { ProfileDialog } from "../../components/content/ProfileDialog";
 
 export type HabitFrequency = "daily" | "weekdays" | "weekends" | "custom";
 export type HabitCategory =
@@ -490,6 +492,15 @@ export default function Home() {
                 )}
               </Button>
               <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsProfileDialogOpen(true)}
+                className="dark:border-slate-600"
+                title="Profile"
+              >
+                <User className="w-5 h-5" />
+              </Button>
+              <Button
                 onClick={() => setIsAddDialogOpen(true)}
                 className="gap-2 flex-1 sm:flex-initial"
               >
@@ -498,11 +509,12 @@ export default function Home() {
               </Button>
               <Button
                 variant="outline"
-                onClick={logout}
-                className="gap-2 flex-1 sm:flex-initial dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-500 hover:border-red-300 dark:hover:border-red-700 transition-colors"
+                size="icon"
+                onClick={handleSignOut}
+                className="dark:border-slate-600"
+                title="Sign Out"
               >
                 <LogOut className="w-5 h-5" />
-                Log Out
               </Button>
             </div>
           </div>
@@ -611,6 +623,14 @@ export default function Home() {
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onAdd={addHabit}
+        />
+
+        {/* Profile Dialog */}
+        <ProfileDialog
+          open={isProfileDialogOpen}
+          onOpenChange={setIsProfileDialogOpen}
+          user={user}
+          habits={habits}
         />
 
         <Toaster />

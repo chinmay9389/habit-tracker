@@ -2,7 +2,14 @@ import { useState } from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Trash2, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
+import {
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Calendar,
+  Edit2,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +25,14 @@ import type { Workout } from "./WorkoutTracker";
 interface WorkoutHistoryProps {
   workouts: Workout[];
   onDelete: (workoutId: string) => void;
+  onEdit: (workout: Workout) => void;
 }
 
-export function WorkoutHistory({ workouts, onDelete }: WorkoutHistoryProps) {
+export function WorkoutHistory({
+  workouts,
+  onDelete,
+  onEdit,
+}: WorkoutHistoryProps) {
   const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(
     new Set()
   );
@@ -82,16 +94,62 @@ export function WorkoutHistory({ workouts, onDelete }: WorkoutHistoryProps) {
                     (sum, ex) => sum + ex.sets.length,
                     0
                   ) || 0;
-                const totalVolume =
-                  workout.exercises?.reduce(
-                    (sum, ex) =>
-                      sum +
-                      ex.sets.reduce(
-                        (setSum, set) => setSum + (set.weight || 0) * set.reps,
-                        0
-                      ),
-                    0
-                  ) || 0;
+
+                // Calculate volume by unit type
+                const volumeLbs =
+                  workout.exercises?.reduce((sum, ex) => {
+                    if (ex.unit === "lbs") {
+                      return (
+                        sum +
+                        ex.sets.reduce(
+                          (setSum, set) =>
+                            setSum + (set.weight || 0) * set.reps,
+                          0
+                        )
+                      );
+                    }
+                    return sum;
+                  }, 0) || 0;
+
+                const volumeKg =
+                  workout.exercises?.reduce((sum, ex) => {
+                    if (ex.unit === "kg") {
+                      return (
+                        sum +
+                        ex.sets.reduce(
+                          (setSum, set) =>
+                            setSum + (set.weight || 0) * set.reps,
+                          0
+                        )
+                      );
+                    }
+                    return sum;
+                  }, 0) || 0;
+
+                // Calculate total time (for cardio/timed exercises)
+                const totalMinutes =
+                  workout.exercises?.reduce((sum, ex) => {
+                    if (ex.unit === "min") {
+                      return (
+                        sum +
+                        ex.sets.reduce((setSum, set) => setSum + set.reps, 0)
+                      );
+                    }
+                    return sum;
+                  }, 0) || 0;
+
+                const totalSeconds =
+                  workout.exercises?.reduce((sum, ex) => {
+                    if (ex.unit === "sec") {
+                      return (
+                        sum +
+                        ex.sets.reduce((setSum, set) => setSum + set.reps, 0)
+                      );
+                    }
+                    return sum;
+                  }, 0) || 0;
+
+                const totalTime = totalMinutes + totalSeconds / 60;
 
                 return (
                   <Card key={workout.id} className="overflow-hidden">
@@ -113,10 +171,22 @@ export function WorkoutHistory({ workouts, onDelete }: WorkoutHistoryProps) {
                               {workout.exercises?.length || 0} exercises
                             </Badge>
                             <Badge variant="secondary">{totalSets} sets</Badge>
-                            {totalVolume > 0 && (
+                            {volumeLbs > 0 && (
                               <Badge variant="secondary">
-                                {Math.round(totalVolume).toLocaleString()} lbs
-                                total
+                                {Math.round(volumeLbs).toLocaleString()} lbs
+                              </Badge>
+                            )}
+                            {volumeKg > 0 && (
+                              <Badge variant="secondary">
+                                {Math.round(volumeKg).toLocaleString()} kg
+                              </Badge>
+                            )}
+                            {totalTime > 0 && (
+                              <Badge variant="secondary" className="gap-1">
+                                <Clock className="w-3 h-3" />
+                                {totalTime >= 1
+                                  ? `${Math.round(totalTime)} min`
+                                  : `${Math.round(totalSeconds)} sec`}
                               </Badge>
                             )}
                           </div>
@@ -126,6 +196,7 @@ export function WorkoutHistory({ workouts, onDelete }: WorkoutHistoryProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => toggleExpand(workout.id)}
+                            title={isExpanded ? "Collapse" : "Expand"}
                           >
                             {isExpanded ? (
                               <ChevronUp className="w-4 h-4" />
@@ -136,8 +207,18 @@ export function WorkoutHistory({ workouts, onDelete }: WorkoutHistoryProps) {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => onEdit(workout)}
+                            className="text-indigo-600 hover:text-indigo-700"
+                            title="Edit Workout"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setDeleteId(workout.id)}
                             className="text-red-600 hover:text-red-700"
+                            title="Delete Workout"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
